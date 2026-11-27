@@ -14,7 +14,7 @@
 
 ---
 
-## 为什么做这个项目？（本项目纯粹vibe coding出来的，由Gemini 4 neon extra high和GPT 6 PRO 共同完成，分享出来给大家省省token，有问题可以提issue）
+## 为什么做这个项目？（本项目纯粹vibe coding出来的，由Gemini 4 neon和GPT 6 PRO 共同完成，分享出来给大家省省token，有问题可以提issue）
 
 相比常见的“只看单日沪深300成交额”或“拿全部宽基净申赎直接当国家队”的粗糙脚本，本项目重点解决了 5 个实战痛点：
 
