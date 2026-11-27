@@ -54,15 +54,19 @@ def show_large_alert_dialog(
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
 
-    exe = Path(sys.executable)
-    pyw = exe.with_name("pythonw.exe")
-    runner = str(pyw if pyw.exists() else exe)
     try:
         creationflags = 0x08000000 if sys.platform == "win32" else 0
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(ROOT_DIR)
+        if getattr(sys, "frozen", False):
+            cmd = [sys.executable, "--alert-payload", tmp_path]
+        else:
+            exe = Path(sys.executable)
+            pyw = exe.with_name("pythonw.exe")
+            runner = str(pyw if pyw.exists() else exe)
+            env["PYTHONPATH"] = str(ROOT_DIR)
+            cmd = [runner, "-m", "src.alert_dialog", tmp_path]
         subprocess.Popen(
-            [runner, "-m", "src.alert_dialog", tmp_path],
+            cmd,
             cwd=str(ROOT_DIR),
             env=env,
             creationflags=creationflags,
@@ -339,12 +343,16 @@ def _run_alert_main(payload_path: str) -> None:
                     win_ref["win"].destroy()
 
             def open_dashboard(self) -> None:
-                exe = Path(sys.executable)
-                pyw = exe.with_name("pythonw.exe")
-                runner = str(pyw if pyw.exists() else exe)
                 creationflags = 0x08000000 if sys.platform == "win32" else 0
+                if getattr(sys, "frozen", False):
+                    cmd = [sys.executable]
+                else:
+                    exe = Path(sys.executable)
+                    pyw = exe.with_name("pythonw.exe")
+                    runner = str(pyw if pyw.exists() else exe)
+                    cmd = [runner, str(ROOT_DIR / "app.py")]
                 subprocess.Popen(
-                    [runner, str(ROOT_DIR / "app.py")],
+                    cmd,
                     cwd=str(ROOT_DIR),
                     creationflags=creationflags,
                 )

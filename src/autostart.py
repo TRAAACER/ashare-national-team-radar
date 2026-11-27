@@ -36,10 +36,18 @@ def _get_pythonw_path() -> Path:
     return pyw if pyw.exists() else exe
 
 
-def get_startup_command() -> str:
+def _get_launch_exec_and_args() -> tuple[str, str]:
+    """区分便携版 EXE 与源码运行环境，返回任务计划程序的 (Execute, Argument)."""
+    if getattr(sys, "frozen", False):
+        return str(Path(sys.executable).resolve()), "--scheduled-check"
     pyw = _get_pythonw_path()
     entry = ROOT_DIR / "app.py"
-    return f'"{pyw}" "{entry}" --scheduled-check'
+    return str(pyw), f'"{entry}" --scheduled-check'
+
+
+def get_startup_command() -> str:
+    exe, arg = _get_launch_exec_and_args()
+    return f'"{exe}" {arg}'
 
 
 def _run_ps(script: str, timeout: float = 15.0) -> subprocess.CompletedProcess[str]:
@@ -151,12 +159,13 @@ Write-Output 'OK'
             logger.warning("Disable scheduled task failed: %s", e)
             return False, str(e)
 
-    pyw = str(_get_pythonw_path()).replace("'", "''")
-    entry = str(ROOT_DIR / "app.py").replace("'", "''")
+    exec_path, arg_str = _get_launch_exec_and_args()
+    exec_ps = exec_path.replace("'", "''")
+    arg_ps = arg_str.replace("'", "''")
     workdir = str(ROOT_DIR).replace("'", "''")
     ps_reg = f"""
 $ErrorActionPreference = 'Stop'
-$act = New-ScheduledTaskAction -Execute '{pyw}' -Argument '"{entry}" --scheduled-check' -WorkingDirectory '{workdir}'
+$act = New-ScheduledTaskAction -Execute '{exec_ps}' -Argument '{arg_ps}' -WorkingDirectory '{workdir}'
 $trg = New-ScheduledTaskTrigger -Daily -At '{clean_time}'
 $set = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -MultipleInstances IgnoreNew
 Register-ScheduledTask -TaskName '{TASK_NAME}' -Action $act -Trigger $trg -Settings $set -Description 'A股国家队动向监控(GJDJK)：每日盘后官方份额公布后自动静默巡检，错过关机下次开机自动补跑，零后台常驻' -Force | Out-Null

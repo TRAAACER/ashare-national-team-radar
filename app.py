@@ -96,7 +96,63 @@ def main() -> None:
     parser.add_argument("--sync-only", action="store_true", help="命令行执行一次智能同步并退出")
     parser.add_argument("--force", action="store_true", help="配合 --sync-only 强制全量重刷")
     parser.add_argument("--server-only", action="store_true", help="仅启动本地 Web 服务（调试用）")
+    parser.add_argument("--alert-payload", type=str, default="", help="内部参数：以独立进程展示大号置顶提醒卡片")
+    parser.add_argument("--enable-schedule", action="store_true", help="注册每晚 21:30 自动定时巡检任务并退出")
+    parser.add_argument("--disable-schedule", action="store_true", help="取消每日自动定时巡检任务并退出")
+    parser.add_argument("--schedule-time", type=str, default="21:30", help="配合 --enable-schedule 指定巡检时间（默认 21:30）")
+    parser.add_argument("--self-test", action="store_true", help="快速自检打包资源、配置与核心模块并退出")
+    parser.add_argument("--self-test-out", type=str, default="", help="可选：将自检结果写入指定文件（供无控制台 EXE 验证）")
     args = parser.parse_args()
+
+    # 独立提醒弹窗子进程模式（便携版 EXE 与源码版通用）
+    if args.alert_payload:
+        from src.alert_dialog import _run_alert_main
+
+        _run_alert_main(args.alert_payload)
+        return
+
+    # 打包资源与模块自检模式（不污染正式库）
+    if args.self_test:
+        import tempfile
+        from pathlib import Path
+        import akshare  # noqa: F401
+        import webview  # noqa: F401
+        from src.config import WEB_DIR, load_watchlist
+        from src.analyzer import NationalTeamAnalyzer
+
+        cfg = load_watchlist()
+        assert len(cfg.get("etfs", [])) >= 30, "watchlist.yaml missing ETFs"
+        echarts_file = WEB_DIR / "vendor" / "echarts.min.js"
+        assert echarts_file.exists() and echarts_file.stat().st_size > 500_000, f"Missing echarts: {echarts_file}"
+        with tempfile.TemporaryDirectory() as td:
+            tmp_db = Database(db_path=Path(td) / "selftest.db")
+            _ = NationalTeamAnalyzer(tmp_db)
+            _ = create_app(tmp_db, SyncService(tmp_db))
+        if args.self_test_out:
+            Path(args.self_test_out).write_text("SELF_TEST_OK\n", encoding="utf-8")
+        if sys.stdout is not None:
+            print("SELF_TEST_OK")
+        return
+
+    # 快捷开关 Win11 每日定时巡检任务（供便携版 .bat 双击调用）
+    if args.enable_schedule or args.disable_schedule:
+        from src.autostart import normalize_schedule_time, set_autostart
+
+        enable_flag = bool(args.enable_schedule)
+        t_str = normalize_schedule_time(args.schedule_time, "21:30")
+        ok, msg = set_autostart(enable_flag, schedule_time=t_str)
+        try:
+            db_tmp = Database()
+            db_tmp.update_settings({"auto_start_enabled": ok if enable_flag else False, "auto_schedule_time": t_str})
+        except Exception:
+            pass
+        if sys.stdout is not None:
+            print(msg)
+        if getattr(sys, "frozen", False) and sys.platform == "win32":
+            import ctypes
+
+            ctypes.windll.user32.MessageBoxW(0, msg, "国家队动向监控 · 定时巡检设置", 0x00000040 if ok else 0x00000030)
+        return
 
     setup_logging()
     logger = logging.getLogger("gjdjk.app")

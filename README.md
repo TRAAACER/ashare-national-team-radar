@@ -52,17 +52,21 @@
 
 ## 快速开始（Windows 11）
 
-### 1. 克隆并安装环境（Python 3.12+）
+### 方式一：直接下载免安装便携版（推荐，无需装 Python）
+1. 前往 **[Releases 最新版本页面](https://github.com/TRAAACER/ashare-national-team-radar/releases/latest)** 下载 `ashare-national-team-radar-v*-win64.zip`；
+2. **完整解压**到本地固定目录（例如 `D:\GJDJK`）；
+3. 双击 **`GJDJK.exe`** 打开独立浅色桌面看板（首次运行自动回填近 1 年历史行情与官方份额，约 1～2 分钟；点右上角 `×` 关窗即彻底退出，零后台占用）；
+4. 双击 **`开启晚间自动巡检.bat`**（或在界面「提醒与设置」页开启），每晚 **21:30** 交易所公布份额后自动静默核实，关机错过下次开机自动补跑。
+
+### 方式二：源码运行（Python 3.12+）
 ```powershell
 git clone https://github.com/TRAAACER/ashare-national-team-radar.git
 cd ashare-national-team-radar
 python -m venv .venv
 .\.venv\Scripts\pip.exe install -r requirements.txt
 ```
-
-### 2. 日常使用
-- **打开桌面看板**：双击 `启动国家队监控.vbs`（首次运行自动回填近 1 年历史行情与官方份额，约 1～2 分钟；关窗即彻底退出）
-- **开启/关闭每晚 21:30 自动定时巡检**：在软件内「提醒与设置」页一键开关并自定义时间，或直接双击 `开启晚间自动巡检.bat` / `关闭自动巡检.bat`
+- **打开桌面看板**：双击 `启动国家队监控.vbs`
+- **开启/关闭每晚 21:30 自动定时巡检**：双击 `开启晚间自动巡检.bat` / `关闭自动巡检.bat`
 - **命令行用法**：
   ```powershell
   .\.venv\Scripts\python.exe app.py                   # 打开独立桌面看板

@@ -1,16 +1,25 @@
-"""项目路径、监控标的池与默认配置加载."""
+"""项目路径、监控标的池与默认配置加载（兼容源码运行与 PyInstaller 独立便携版）."""
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 import yaml
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
-CONFIG_PATH = ROOT_DIR / "config" / "watchlist.yaml"
+IS_FROZEN = bool(getattr(sys, "frozen", False))
+# 可写运行根目录：便携版为 .exe 所在目录（让 data/gjdjk.db 落在解压目录旁边），源码版为仓库根目录
+ROOT_DIR = Path(sys.executable).resolve().parent if IS_FROZEN else Path(__file__).resolve().parent.parent
+# 只读内置资源目录：PyInstaller 6 --onedir 放在 _internal/（sys._MEIPASS）下
+BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", ROOT_DIR)) if IS_FROZEN else ROOT_DIR
+
+_EXTERNAL_CONFIG = ROOT_DIR / "config" / "watchlist.yaml"
+_BUNDLED_CONFIG = BUNDLE_DIR / "config" / "watchlist.yaml"
+CONFIG_PATH = _EXTERNAL_CONFIG if _EXTERNAL_CONFIG.exists() else _BUNDLED_CONFIG
+
 DATA_DIR = ROOT_DIR / "data"
 DB_PATH = DATA_DIR / "gjdjk.db"
-WEB_DIR = ROOT_DIR / "web"
+WEB_DIR = (ROOT_DIR / "web") if (ROOT_DIR / "web").exists() else (BUNDLE_DIR / "web")
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     # 通知开关
@@ -47,8 +56,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 
 
 def load_watchlist() -> dict[str, Any]:
-    """读取 config/watchlist.yaml."""
-    with CONFIG_PATH.open("r", encoding="utf-8") as f:
+    """读取 config/watchlist.yaml（便携版优先读取 .exe 旁的外部配置，便于用户增补新宽基）."""
+    path = _EXTERNAL_CONFIG if _EXTERNAL_CONFIG.exists() else _BUNDLED_CONFIG
+    with path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

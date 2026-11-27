@@ -1,0 +1,77 @@
+name: Build & Publish Windows Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag name (e.g. v3.1.0)'
+        required: true
+        default: 'v3.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-win64-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies & PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Run full regression test suite
+        run: pytest -v
+
+      - name: Resolve release tag
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag_name }}"
+          if (-not $tag) { $tag = "${{ github.ref_name }}" }
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Build & self-test standalone Windows portable ZIP
+        shell: pwsh
+        run: |
+          python scripts/build_release.py --version "${{ steps.ver.outputs.tag }}"
+
+      - name: Publish GitHub Release with portable ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "${{ steps.ver.outputs.tag }} · Win11 零后台盘后核实免安装版"
+          draft: false
+          prerelease: false
+          body: |
+            ## A股国家队宽基 ETF 动向监控雷达 ${{ steps.ver.outputs.tag }}（Win11 免安装便携版）
+
+            ### 🚀 下载即用（无需安装 Python）
+            1. 在下方 **Assets** 下载 `ashare-national-team-radar-${{ steps.ver.outputs.tag }}-win64.zip`；
+            2. **完整解压**到本地目录（如 `D:\GJDJK`）；
+            3. 双击 **`GJDJK.exe`** 即可打开独立浅色桌面看板（首次启动自动回填近 1 年历史数据，关窗即彻底退出、零后台常驻）；
+            4. 双击 **`开启晚间自动巡检.bat`**（或在设置页一键开启），即可每晚 **21:30** 交易所份额公布后自动静默核实，错过关机下次开机自动补跑。
+
+            ### ✨ 本版核心特性
+            - **严格 12 只汇金核心池 + 31 只全宽基池**：精准过滤 A500 / 创业板等混合资金噪音；
+            - **时点一致（Point-in-Time）多期定期报告 + 单边大卖鸽笼库存底线**：经 249 个交易日实盘校核，2026 上半年估算中值 `-13,098 亿` 精准对齐真实减持，9~11 月底层资金流与权威统计误差 `0.0 亿`；
+            - **双锚自适应百分比标尺**：随宽基总规模与近 120 日比率分位自动伸缩，长年免调参；
+            - **全自动长年运维**：4 月初年报 / 9 月初半年报自动追更重算；连续缺数或同步报错自动弹出醒目橙红色数据源异常预警卡片；
+            - **5 通道提醒**：Win11 大号置顶手动关闭卡片 + 飞书 / 企业微信 / 个人微信（Server酱 & PushPlus）/ 自定义 Webhook。
+
+            > ⚠️ **免责声明**：本工具基于公开交易所与财经接口数据推演，仅用于数据监测与个人复盘研究，不构成任何投资建议。
+          files: |
+            dist/ashare-national-team-radar-*-win64.zip
+            dist/SHA256SUMS.txt
