@@ -46,9 +46,9 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "alert_flow_yi": 150.0,
     "alert_score_min": 72,
     "alert_active_lamps_min": 3,
-    # 自动同步与桌面行为（默认每日晚间 21:30 盘后份额公布后定时巡检，错过自动开机补跑）
+    # 自动同步与桌面行为（默认每日晚间 22:30 盘后份额公布后定时巡检，错过自动开机补跑）
     "auto_start_enabled": True,
-    "auto_schedule_time": "21:30",
+    "auto_schedule_time": "22:30",
     "holdings_last_check_at": "",
     "backfill_days": 250,
     "server_port": 18688,

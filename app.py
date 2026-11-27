@@ -3,7 +3,7 @@
 
 两种极简生命周期（彻底告别托盘常驻与内存占用）：
   1. pythonw.exe app.py                     # 双击快捷方式打开独立浅色桌面窗，点右上角 × 优雅落盘并彻底关闭全部进程！
-  2. pythonw.exe app.py --scheduled-check   # 每晚 21:30 官方份额公布后自动巡检（错过关机则下次开机补跑）→ 仅在有核实结论异动或数据源异常时弹大卡片，无事直接退出(0 MB)！
+  2. pythonw.exe app.py --scheduled-check   # 每晚 22:30 官方份额公布后自动巡检（错过关机则下次开机补跑）→ 仅在有核实结论异动或数据源异常时弹大卡片，无事直接退出(0 MB)！
   3. python app.py --sync-only              # 命令行立即执行一次同步检查并退出
 """
 
@@ -89,7 +89,7 @@ def main() -> None:
     parser.add_argument(
         "--scheduled-check",
         action="store_true",
-        help="每日盘后定时巡检（默认每晚21:30，错过关机则下次开机补跑）：自动联网探活→核实份额与底牌→仅在核实异动或接口异常时弹窗→立刻退出",
+        help="每日盘后定时巡检（默认每晚22:30，错过关机则下次开机补跑）：自动联网探活→核实份额与底牌→仅在核实异动或接口异常时弹窗→立刻退出",
     )
     parser.add_argument("--boot-check", action="store_true", help="兼容旧参数，同 --scheduled-check")
     parser.add_argument("--delay", type=int, default=0, help="启动前额外等待秒数（默认 0，改用智能联网探活）")
@@ -97,9 +97,9 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="配合 --sync-only 强制全量重刷")
     parser.add_argument("--server-only", action="store_true", help="仅启动本地 Web 服务（调试用）")
     parser.add_argument("--alert-payload", type=str, default="", help="内部参数：以独立进程展示大号置顶提醒卡片")
-    parser.add_argument("--enable-schedule", action="store_true", help="注册每晚 21:30 自动定时巡检任务并退出")
+    parser.add_argument("--enable-schedule", action="store_true", help="注册每晚 22:30 自动定时巡检任务并退出")
     parser.add_argument("--disable-schedule", action="store_true", help="取消每日自动定时巡检任务并退出")
-    parser.add_argument("--schedule-time", type=str, default="21:30", help="配合 --enable-schedule 指定巡检时间（默认 21:30）")
+    parser.add_argument("--schedule-time", type=str, default="22:30", help="配合 --enable-schedule 指定巡检时间（默认 22:30）")
     parser.add_argument("--self-test", action="store_true", help="快速自检打包资源、配置与核心模块并退出")
     parser.add_argument("--self-test-out", type=str, default="", help="可选：将自检结果写入指定文件（供无控制台 EXE 验证）")
     args = parser.parse_args()
@@ -139,7 +139,7 @@ def main() -> None:
         from src.autostart import normalize_schedule_time, set_autostart
 
         enable_flag = bool(args.enable_schedule)
-        t_str = normalize_schedule_time(args.schedule_time, "21:30")
+        t_str = normalize_schedule_time(args.schedule_time, "22:30")
         ok, msg = set_autostart(enable_flag, schedule_time=t_str)
         try:
             db_tmp = Database()

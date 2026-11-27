@@ -72,7 +72,7 @@ class SettingsUpdateRequest(BaseModel):
             return None
         s = v.strip()
         if not re.match(r"^([01]\d|2[0-3]):([0-5]\d)$", s):
-            raise ValueError("定时巡检时间格式必须为 HH:MM（如 21:30）")
+            raise ValueError("定时巡检时间格式必须为 HH:MM（如 22:30）")
         return s
 
     @field_validator("feishu_webhook", "wecom_webhook", "custom_webhook_url")
@@ -438,7 +438,7 @@ def create_app(db: Database, sync_service: SyncService) -> FastAPI:
         s = db.get_settings()
         ai = get_autostart_info()
         s["auto_start_enabled"] = ai["enabled"]
-        s["auto_schedule_time"] = ai["schedule_time"] if ai["enabled"] else normalize_schedule_time(s.get("auto_schedule_time"), "21:30")
+        s["auto_schedule_time"] = ai["schedule_time"] if ai["enabled"] else normalize_schedule_time(s.get("auto_schedule_time"), "22:30")
         s["autostart_info"] = ai
         s["current_scale"] = sync_service.analyzer.get_current_scale()
         return s
@@ -455,7 +455,7 @@ def create_app(db: Database, sync_service: SyncService) -> FastAPI:
             )
             target_time = normalize_schedule_time(
                 payload.get("auto_schedule_time") or cur_settings.get("auto_schedule_time"),
-                "21:30",
+                "22:30",
             )
             ok, msg = set_autostart(target_enabled, schedule_time=target_time)
             autostart_msg = msg
@@ -464,7 +464,7 @@ def create_app(db: Database, sync_service: SyncService) -> FastAPI:
         saved = db.update_settings(payload)
         ai = get_autostart_info()
         saved["auto_start_enabled"] = ai["enabled"]
-        saved["auto_schedule_time"] = ai["schedule_time"] if ai["enabled"] else normalize_schedule_time(saved.get("auto_schedule_time"), "21:30")
+        saved["auto_schedule_time"] = ai["schedule_time"] if ai["enabled"] else normalize_schedule_time(saved.get("auto_schedule_time"), "22:30")
         saved["autostart_info"] = ai
         recompute_msg = ""
         if "auto_calibrate_thresholds" in payload and bool(payload["auto_calibrate_thresholds"]) != old_auto:

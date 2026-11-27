@@ -207,7 +207,7 @@ async function pollStatus() {
     $("sidebar-latest-date").textContent = `最新交易日：${st.latest_trade_date || "尚无数据"}`;
     const ai = st.autostart_info || {};
     $("sidebar-autostart").textContent = ai.enabled
-      ? `定时巡检：每日 ${ai.schedule_time || "21:30"}`
+      ? `定时巡检：每日 ${ai.schedule_time || "22:30"}`
       : "定时巡检：未开启";
 
     // 渲染顶部数据源健康预警条（仅有严重 error/warning 故障时显现，平时完全隐藏）
@@ -1094,7 +1094,7 @@ function renderAnnouncements(items) {
 function readSettingsForm() {
   return {
     auto_start_enabled: $("set-autostart").checked,
-    auto_schedule_time: ($("set-schedule-time")?.value || "21:30").trim(),
+    auto_schedule_time: ($("set-schedule-time")?.value || "22:30").trim(),
     backfill_days: Number($("set-backfill-days").value) || 250,
     notify_health_alerts: $("set-health-notify") ? $("set-health-notify").checked : true,
     notify_daily_summary: $("set-daily-summary").checked,
@@ -1122,13 +1122,13 @@ async function loadSettings() {
     const [s, nh] = await Promise.all([apiGet("/api/settings"), apiGet("/api/notifications")]);
     $("set-autostart").checked = !!s.auto_start_enabled;
     if ($("set-schedule-time")) {
-      $("set-schedule-time").value = s.auto_schedule_time || "21:30";
+      $("set-schedule-time").value = s.auto_schedule_time || "22:30";
     }
     if ($("set-autostart-hint") && s.autostart_info) {
       const ai = s.autostart_info;
       $("set-autostart-hint").textContent = ai.enabled
-        ? `已注册 Win11 任务计划（${ai.task_name}）：每日 ${ai.schedule_time || "21:30"} 执行，关机错过自动补跑${ai.next_run ? ` · 下次计划：${ai.next_run}` : ""}`
-        : "写入 Win11 原生任务计划程序（免管理员权限），默认每晚 21:30 核实官方结论，错过自动开机补跑";
+        ? `已注册 Win11 任务计划（${ai.task_name}）：每日 ${ai.schedule_time || "22:30"} 执行，关机错过自动补跑${ai.next_run ? ` · 下次计划：${ai.next_run}` : ""}`
+        : "写入 Win11 原生任务计划程序（免管理员权限），默认每晚 22:30 核实官方结论，错过自动开机补跑";
     }
     if ($("set-health-notify")) {
       $("set-health-notify").checked = s.notify_health_alerts !== false;

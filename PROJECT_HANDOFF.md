@@ -2,7 +2,7 @@
 
 > **本文档用途**：面向后续接手维护的开发者、AI Agent 或换机迁移时的本人。脱离历史对话上下文后，仅凭本文件与代码库即可完整理解本项目的设计红线、量化算法数学细节、外部数据源特性、并发架构、历史实证结果及日常运维方式。
 >
-> **最后更新**：2026-11-27（当前版本：**v3.1**，回归测试 **15/15 通过**，实盘核验 **249 个交易日**）
+> **最后更新**：2026-11-27（当前版本：**v3.1.1**，回归测试 **15/15 通过**，实盘核验 **249 个交易日**）
 
 ---
 
@@ -14,7 +14,7 @@
 
 1. **零后台常驻进程（0 MB 空闲内存）**
    - 不使用系统托盘驻留（已彻底移除 `pystray` / `APScheduler` 常驻方案）。
-   - **定时巡检模式**（`pythonw.exe app.py --scheduled-check`）：由 Win11 原生任务计划程序（`GJDJK_DailyCheck`，免管理员权限）在每晚 **21:30** 交易所份额公布后唤醒执行，并开启 `StartWhenAvailable=True`（当晚关机错过时，下次开机自动补跑）；巡检完几秒即彻底退出，内存归零。
+   - **定时巡检模式**（`pythonw.exe app.py --scheduled-check`）：由 Win11 原生任务计划程序（`GJDJK_DailyCheck`，免管理员权限）在每晚 **22:30** 交易所份额公布后唤醒执行，并开启 `StartWhenAvailable=True`（当晚关机错过时，下次开机自动补跑）；巡检完几秒即彻底退出，内存归零。
    - **看板浏览模式**（`pythonw.exe app.py`）：按需双击快捷方式打开独立浅色 `pywebview` 桌面窗口；点击右上角 `×` 关窗时优雅等待最多 `2.5s` 落盘后直接彻底退出（`os._exit(0)`）。
 2. **大号、置顶、必须手动关闭的提醒卡片**
    - 仅当出现 **已核实（`VERIFIED`）的重大异动**、**新官宣公告** 或 **数据源故障预警（`HEALTH_ALERT`）** 时弹出 `600px` 宽的独立浅色高对比窗口（[src/alert_dialog.py](src/alert_dialog.py)），绝不自动消失，必须手动点击“我知道了”或“打开完整看板”。
@@ -49,7 +49,7 @@ d:\GJDJK\
 │   ├── server.py              # FastAPI 本地接口（Pydantic 严格校验、看板聚合、CSV/Markdown 导出）
 │   ├── notifier.py            # 5 通道通知分发（Win11大卡片、飞书、企微、Server酱/PushPlus、自定义Webhook）
 │   ├── alert_dialog.py        # 独立进程大号置顶提醒卡片（支持买/卖/调仓/公告/橙红数据源故障预警）
-│   ├── autostart.py           # Win11 任务计划程序管理（GJDJK_DailyCheck，默认21:30 + StartWhenAvailable）
+│   ├── autostart.py           # Win11 任务计划程序管理（GJDJK_DailyCheck，默认22:30 + StartWhenAvailable）
 │   ├── window.py              # Edge --app 降级窗口启动器
 │   ├── icon_gen.py            # 本地矢量 ICO 图标生成
 │   └── fetchers/
@@ -66,7 +66,7 @@ d:\GJDJK\
 ├── tests/
 │   └── test_core.py           # 15 项全量回归测试（覆盖全部核心算法、P0/P1 修复点与健康监控）
 ├── 启动国家队监控.vbs          # 无黑框启动桌面窗口（调用 .venv\Scripts\pythonw.exe app.py）
-├── 开启晚间自动巡检.bat        # 一键注册 Win11 每日 21:30 定时巡检任务（调用 set_autostart(True, '21:30')）
+├── 开启晚间自动巡检.bat        # 一键注册 Win11 每日 22:30 定时巡检任务（调用 set_autostart(True, '22:30')）
 ├── 关闭自动巡检.bat            # 一键卸载定时巡检任务（调用 set_autostart(False)）
 ├── LICENSE                    # MIT 开源协议
 ├── requirements.txt           # 精简后的 Python 依赖清单
@@ -170,11 +170,13 @@ SQLite 开启 `WAL`、`foreign_keys=ON`、`busy_timeout=30000`：
 - **v3.0（GPT Pro 全面审阅吸收升级）**：
   - 采纳并修复 `P0-1 ~ P0-7`、`P1-1 ~ P1-6`、`P2-1 ~ P2-5`：严格 `VERIFIED` 完备性门控、拒绝无日期深交所快照、严格 12 只 `huijin_core` 核心池、东财多报告期时点一致锚点 + 时效周转率衰减、取消 15% 硬地板、分离原始/派生写入原子发布、长离线自动延伸回补窗口、跨进程 SQLite 租约 + 分通道 Outbox 重试、Pydantic 强校验 + 彻底防死锁、比率分位平滑自适应标尺 + 每日持久化、完整日 5 分钟 K 线与 DB 尾盘基线、同方向共振 + 调仓解耦、独立 `user_notes` 表、跨零区间完整展示与独立着色、严禁缺基准偷换沪深300、CSV 公式中和、PushPlus 升 HTTPS、公告分类标签。
   - 主动驳回未采纳项：`echarts.min.js` 缺失系审阅包剔除导致的误报；跳过单机 API Token 过度防御；跳过发散的全路径库存仿真。
-- **v3.1（当前版）**：
+- **v3.1**：
   - 修复无份额盘面初判将低位暴涨误标为 `PRELIM_SELL` 的问题（改为中性 `PRELIM_WATCH`），并将自动弹窗严格收紧为 `VERIFIED` 核实结论专属。
   - 新增单边大卖「鸽笼库存底线」校正，将 2026 H1 估算中值从 `-9,904亿` 精准校准至 `-13,098亿`。
-  - 自动巡检从开机 30 秒注册表升级为 Win11 原生任务计划 `GJDJK_DailyCheck`（默认每晚 `21:30` + `StartWhenAvailable` 错过开机补跑 + 智能联网探活）。
+  - 自动巡检从开机 30 秒注册表升级为 Win11 原生任务计划 `GJDJK_DailyCheck`（`StartWhenAvailable` 错过开机补跑 + 智能联网探活）。
   - 新增 4 月初/9 月初定期报告自动追更刷新机制，以及连续报错/连续缺数的自动健康巡检与橙红色 `HEALTH_ALERT` 弹窗预警。
+- **v3.1.1（当前版）**：
+  - 将默认晚间自动定时巡检时间由 `21:30` 调整至 `22:30`（同步更新源码默认配置、前端设置页、源码版及便携版 `开启晚间自动巡检.bat`），避免放量交易日沪深交易所延迟公布 ETF 份额导致漏检。
 
 ---
 
@@ -187,9 +189,9 @@ SQLite 开启 `WAL`、`foreign_keys=ON`、`busy_timeout=30000`：
    python -m venv .venv
    .\.venv\Scripts\pip.exe install -r requirements.txt
    ```
-3. 注册每日 21:30 定时巡检任务（或在打开软件后的「提醒与设置」页点击保存）：
+3. 注册每日 22:30 定时巡检任务（或在打开软件后的「提醒与设置」页点击保存）：
    ```powershell
-   .\.venv\Scripts\python.exe -c "from src.autostart import set_autostart; print(set_autostart(True, '21:30'))"
+   .\.venv\Scripts\python.exe -c "from src.autostart import set_autostart; print(set_autostart(True, '22:30'))"
    ```
 4. 双击 `启动国家队监控.vbs` 启动看板（可右键创建桌面快捷方式并指向 `data\gjdjk.ico`）。
 
@@ -204,7 +206,7 @@ node --check web/app.js
 # 3. 命令行手动执行一次完整智能同步（或加 --force 强制重刷）
 .\.venv\Scripts\python.exe app.py --sync-only
 
-# 4. 模拟每晚 21:30 定时巡检（跑完即退出，0 MB 驻留）
+# 4. 模拟每晚 22:30 定时巡检（跑完即退出，0 MB 驻留）
 .\.venv\Scripts\python.exe app.py --scheduled-check --delay 0
 
 # 5. 查看当前 Win11 计划任务状态

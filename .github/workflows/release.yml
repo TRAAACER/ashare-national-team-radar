@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release tag name (e.g. v3.1.0)'
+        description: 'Release tag name (e.g. v3.1.1)'
         required: true
-        default: 'v3.1.0'
+        default: 'v3.1.1'
 
 permissions:
   contents: write
@@ -62,7 +62,7 @@ jobs:
             1. 在下方 **Assets** 下载 `ashare-national-team-radar-${{ steps.ver.outputs.tag }}-win64.zip`；
             2. **完整解压**到本地目录（如 `D:\GJDJK`）；
             3. 双击 **`GJDJK.exe`** 即可打开独立浅色桌面看板（首次启动自动回填近 1 年历史数据，关窗即彻底退出、零后台常驻）；
-            4. 双击 **`开启晚间自动巡检.bat`**（或在设置页一键开启），即可每晚 **21:30** 交易所份额公布后自动静默核实，错过关机下次开机自动补跑。
+            4. 双击 **`开启晚间自动巡检.bat`**（或在设置页一键开启），即可每晚 **22:30** 交易所份额公布后自动静默核实，错过关机下次开机自动补跑。
 
             ### ✨ 本版核心特性
             - **严格 12 只汇金核心池 + 31 只全宽基池**：精准过滤 A500 / 创业板等混合资金噪音；

@@ -28,10 +28,10 @@ USAGE_TXT = """================================================================
 2. 双击「GJDJK.exe」即可打开独立桌面看板（无需安装 Python）：
    - 首次运行会自动回填近 1 年历史行情与沪深官方份额（约 1~2 分钟）；
    - 点击右上角 × 关闭窗口即彻底退出，零后台常驻、不占内存。
-3. 推荐开启每晚 21:30 自动盘后巡检（二选一）：
+3. 推荐开启每晚 22:30 自动盘后巡检（二选一）：
    - 方式 A：双击本目录的「开启晚间自动巡检.bat」；
    - 方式 B：打开 GJDJK.exe → 左侧「提醒与设置」→ 开启每日定时巡检并保存。
-   （每晚 21:30 交易所公布官方份额后静默核实几秒即退出；若当晚关机错过，
+   （每晚 22:30 交易所公布官方份额后静默核实几秒即退出；若当晚关机错过，
     下次开机联网后自动补跑；仅在有核实异动或接口异常时弹大号提醒卡片。）
 
 【个人数据与升级】
@@ -56,7 +56,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def build_release(version: str) -> Path:
-    ver = version.strip() or "v3.1.0"
+    ver = version.strip() or "v3.1.1"
     ico_path = ensure_ico_file()
 
     dist_dir = ROOT_DIR / "dist"
@@ -157,7 +157,7 @@ def build_release(version: str) -> Path:
     shutil.copy2(ROOT_DIR / "README.md", pkg_dir / "README.md")
 
     (pkg_dir / "开启晚间自动巡检.bat").write_text(
-        '@echo off\r\nstart "" "%~dp0GJDJK.exe" --enable-schedule --schedule-time 21:30\r\n',
+        '@echo off\r\nstart "" "%~dp0GJDJK.exe" --enable-schedule --schedule-time 22:30\r\n',
         encoding="utf-8",
     )
     (pkg_dir / "关闭自动巡检.bat").write_text(
@@ -201,6 +201,6 @@ def build_release(version: str) -> Path:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version", default="v3.1.0", help="Release tag version, e.g. v3.1.0")
+    parser.add_argument("--version", default="v3.1.1", help="Release tag version, e.g. v3.1.1")
     args = parser.parse_args()
     build_release(args.version)

@@ -1,4 +1,4 @@
-"""Win11 零后台常驻定时巡检管理（原生任务计划程序：默认每晚 21:30 交易所份额公布后运行，错过关机则下次开机自动补跑）."""
+"""Win11 零后台常驻定时巡检管理（原生任务计划程序：默认每晚 22:30 交易所份额公布后运行，错过关机则下次开机自动补跑）."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ LEGACY_REG_NAME = "GJDJK_NationalTeamMonitor"
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 
-def normalize_schedule_time(raw: str | None, default: str = "21:30") -> str:
+def normalize_schedule_time(raw: str | None, default: str = "22:30") -> str:
     s = (raw or "").strip()
     if _TIME_RE.match(s):
         return s
@@ -81,7 +81,7 @@ def _remove_legacy_registry_run() -> None:
 def get_autostart_info() -> dict[str, Any]:
     """查询 Win11 任务计划程序定时巡检状态."""
     if sys.platform != "win32":
-        return {"enabled": False, "schedule_time": "21:30", "mode": "none", "next_run": None, "task_name": TASK_NAME}
+        return {"enabled": False, "schedule_time": "22:30", "mode": "none", "next_run": None, "task_name": TASK_NAME}
 
     ps = f"""
 $t = Get-ScheduledTask -TaskName '{TASK_NAME}' -ErrorAction SilentlyContinue
@@ -116,7 +116,7 @@ if ($null -eq $t) {{
             data = json.loads(res.stdout.strip().splitlines()[-1])
             return {
                 "enabled": bool(data.get("enabled")),
-                "schedule_time": normalize_schedule_time(data.get("schedule_time"), "21:30"),
+                "schedule_time": normalize_schedule_time(data.get("schedule_time"), "22:30"),
                 "mode": data.get("mode", "none"),
                 "start_when_available": bool(data.get("start_when_available", True)),
                 "next_run": data.get("next_run"),
@@ -124,22 +124,22 @@ if ($null -eq $t) {{
             }
     except Exception as e:
         logger.warning("Query scheduled task failed: %s", e)
-    return {"enabled": False, "schedule_time": "21:30", "mode": "none", "next_run": None, "task_name": TASK_NAME}
+    return {"enabled": False, "schedule_time": "22:30", "mode": "none", "next_run": None, "task_name": TASK_NAME}
 
 
 def is_autostart_enabled() -> bool:
     return bool(get_autostart_info().get("enabled"))
 
 
-def set_autostart(enabled: bool, schedule_time: str = "21:30") -> tuple[bool, str]:
+def set_autostart(enabled: bool, schedule_time: str = "22:30") -> tuple[bool, str]:
     """
-    启用/禁用 Win11 原生每日盘后定时巡检任务（默认 21:30，开启 StartWhenAvailable 错过自动补跑），
+    启用/禁用 Win11 原生每日盘后定时巡检任务（默认 22:30，开启 StartWhenAvailable 错过自动补跑），
     并自动清理旧版开机启动注册表项，确保零后台常驻且只在出结论后运行。
     """
     if sys.platform != "win32":
         return False, "当前非 Windows 系统"
 
-    clean_time = normalize_schedule_time(schedule_time, "21:30")
+    clean_time = normalize_schedule_time(schedule_time, "22:30")
     _remove_legacy_registry_run()
 
     if not enabled:
