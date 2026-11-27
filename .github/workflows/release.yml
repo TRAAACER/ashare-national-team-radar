@@ -33,7 +33,7 @@ jobs:
           pip install -r requirements.txt pyinstaller
 
       - name: Run full regression test suite
-        run: pytest -v
+        run: python -m pytest -v
 
       - name: Resolve release tag
         id: ver
