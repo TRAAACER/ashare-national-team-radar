@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>国家队动向监控 · GJDJK</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/vendor/echarts.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 左侧 Win11 风格导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="8" fill="#2563EB"/>
+            <path d="M6 18.5L11 13.5L15 16.5L22 9.5" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="22" cy="9.5" r="2.2" fill="#FCA5A5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">国家队监控</div>
+          <div class="brand-sub">GJDJK · Win11 桌面版</div>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-view="overview">
+          <span class="nav-icon">📊</span>
+          <span>今日全景</span>
+        </button>
+        <button class="nav-item" data-view="journal">
+          <span class="nav-icon">📒</span>
+          <span>每日日志</span>
+          <span class="nav-badge" id="nav-log-count">--</span>
+        </button>
+        <button class="nav-item" data-view="holdings">
+          <span class="nav-icon">🏛️</span>
+          <span>公告与底牌</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-icon">⚙️</span>
+          <span>提醒与设置</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sync-mini-card">
+          <div class="sync-mini-row">
+            <span class="status-dot" id="sidebar-status-dot"></span>
+            <span class="sync-mini-title" id="sidebar-status-text">已就绪</span>
+          </div>
+          <div class="sync-mini-meta" id="sidebar-latest-date">最新交易日：--</div>
+          <div class="sync-mini-meta" id="sidebar-autostart">定时巡检：检测中</div>
+          <button class="btn btn-primary btn-sm btn-block" id="btn-sync-now" style="margin-top:10px;">
+            立即同步检查
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧主内容区 -->
+    <main class="main-area">
+      <!-- 后台同步 / 首次1年回填实时进度条 -->
+      <div class="sync-banner hidden" id="sync-banner">
+        <div class="sync-banner-top">
+          <div class="sync-banner-msg">
+            <span class="spinner"></span>
+            <span id="sync-banner-text">正在同步最新行情与交易所份额...</span>
+          </div>
+          <span class="sync-banner-pct" id="sync-banner-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="sync-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- 数据源健康异常告警条（连续报错或连续多日份额缺数时自动醒目展示） -->
+      <div class="health-banner hidden" id="health-banner">
+        <div class="health-banner-body">
+          <div class="health-banner-title" id="health-banner-title">⚠ 数据源异常预警</div>
+          <div class="health-banner-detail" id="health-banner-detail"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-health-resync">立即重刷检查</button>
+      </div>
+
+      <!-- 视图 1：今日全景 -->
+      <section class="view active" id="view-overview">
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">今日动向全景</h1>
+            <p class="page-subtitle" id="overview-subtitle">沪深双所 31 只宽基 ETF 份额净申赎 + 12 只汇金核心池五维共振识别</p>
+          </div>
+          <div class="header-actions">
+            <label class="date-picker-wrap">
+              <span>查看日期</span>
+              <select id="overview-date-select" class="select-input"></select>
+            </label>
+            <button class="btn btn-ghost" id="btn-open-methodology" title="查看买卖估算与五维模型公式说明">
+              口径说明
+            </button>
+          </div>
+        </header>
+
+        <!-- 核心结论 Hero 卡片 -->
+        <div class="card hero-card" id="hero-card">
+          <div class="hero-left">
+            <div class="hero-badges">
+              <span class="verdict-pill quiet" id="hero-verdict-pill">加载中...</span>
+              <span class="stage-pill" id="hero-stage-pill">--</span>
+              <span class="date-tag" id="hero-date-tag">--</span>
+            </div>
+            <p class="hero-summary" id="hero-summary">
+              正在读取本地历史数据，首次启动将自动回填近 1 年（约 250 个交易日）行情与交易所份额...
+            </p>
+            <div class="rotation-callout hidden" id="hero-rotation-callout">
+              <span class="rotation-label">跨宽基调仓路径</span>
+              <span id="hero-rotation-text"></span>
+            </div>
+            <div class="index-strip" id="hero-index-strip">
+              <div class="idx-chip"><span>上证指数</span><strong id="idx-sh">--</strong></div>
+              <div class="idx-chip"><span>沪深300</span><strong id="idx-hs300">--</strong></div>
+              <div class="idx-chip"><span>中证1000</span><strong id="idx-zz1000">--</strong></div>
+              <div class="idx-chip"><span>创业板指</span><strong id="idx-cyb">--</strong></div>
+            </div>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="metric-box">
+              <div class="metric-label">口径一 · 宽基全池净申赎</div>
+              <div class="metric-value" id="metric-pool-flow">--</div>
+              <div class="metric-sub" id="metric-pool-split">流入 -- / 流出 --</div>
+            </div>
+            <div class="metric-box highlight-box">
+              <div class="metric-label">口径二 · 疑似国家队买卖估算</div>
+              <div class="metric-value" id="metric-nt-range">--</div>
+              <div class="metric-sub" id="metric-nt-mid">结合定期报告实名占比与同步共振校准</div>
+            </div>
+          </div>
+
+          <div class="hero-gauge">
+            <svg class="score-ring" viewBox="0 0 110 110">
+              <circle class="ring-bg" cx="55" cy="55" r="46" />
+              <circle class="ring-fg" id="hero-score-ring" cx="55" cy="55" r="46" stroke-dasharray="289" stroke-dashoffset="289" />
+            </svg>
+            <div class="score-center">
+              <div class="score-num" id="hero-score-num">--</div>
+              <div class="score-caption">异常信号强度</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8 大宽基国家队买卖方块阵（一眼看清各宽基买了多少、卖了多少） -->
+        <div class="section-head">
+          <h2 class="section-title">各宽基国家队估算买卖方块</h2>
+          <span class="section-hint">点击任意宽基方块可一键切换下方趋势曲线 · 红=净买入，绿=净卖出，灰=基本未动</span>
+        </div>
+        <div class="group-blocks-grid" id="group-blocks-grid"></div>
+
+        <!-- 区间累计统计条 -->
+        <div class="window-grid" id="window-stats-grid">
+          <div class="stat-tile"><div class="stat-title">近 5 交易日</div><div class="stat-val" id="ws-5-net">--</div><div class="stat-sub" id="ws-5-sub">--</div></div>
+          <div class="stat-tile"><div class="stat-title">近 20 交易日</div><div class="stat-val" id="ws-20-net">--</div><div class="stat-sub" id="ws-20-sub">--</div></div>
+          <div class="stat-tile"><div class="stat-title">近 60 交易日</div><div class="stat-val" id="ws-60-net">--</div><div class="stat-sub" id="ws-60-sub">--</div></div>
+          <div class="stat-tile"><div class="stat-title">近 1 年累计</div><div class="stat-val" id="ws-250-net">--</div><div class="stat-sub" id="ws-250-sub">--</div></div>
+        </div>
+
+        <!-- 五维透明信号灯 -->
+        <div class="section-head">
+          <h2 class="section-title">五维透明信号灯</h2>
+          <span class="section-hint">每项独立判定并公开实测值与阈值，红=买入/护盘倾向，绿=卖出/压盘倾向，灰=中性</span>
+        </div>
+        <div class="lamps-grid" id="lamps-grid"></div>
+
+        <!-- 资金流趋势双轴图 + 8大宽基结构图 -->
+        <div class="charts-row">
+          <div class="card chart-card-lg">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title" id="trend-chart-title">沪深300 国家队估算买卖 vs 沪深300</h3>
+                <p class="card-desc">默认展示所选宽基的国家队估算买卖量 · 可切换全池净申赎或全宽基合计 · 点击柱体跳转当天明细</p>
+              </div>
+              <div class="chart-controls">
+                <select id="trend-benchmark-select" class="select-input input-sm" title="切换叠加的宽基指数曲线">
+                  <option value="000300">曲线：沪深300</option>
+                  <option value="000016">曲线：上证50</option>
+                  <option value="000905">曲线：中证500</option>
+                  <option value="000852">曲线：中证1000</option>
+                  <option value="399006">曲线：创业板指</option>
+                  <option value="000688">曲线：科创50</option>
+                  <option value="000510">曲线：中证A500</option>
+                  <option value="000001">曲线：上证指数</option>
+                </select>
+                <div class="segmented" id="trend-metric-tabs" title="切换柱状图统计口径">
+                  <button class="seg-btn active" data-metric="NT">国家队估算</button>
+                  <button class="seg-btn" data-metric="POOL">全池净申赎</button>
+                </div>
+                <div class="segmented" id="trend-scope-tabs" title="切换柱状图统计范围">
+                  <button class="seg-btn active" data-scope="GROUP" id="btn-scope-group">对应宽基</button>
+                  <button class="seg-btn" data-scope="ALL" id="btn-scope-all">全宽基</button>
+                </div>
+                <label class="checkbox-inline">
+                  <input type="checkbox" id="toggle-cum-line" />
+                  <span>累计线</span>
+                </label>
+                <div class="segmented" id="trend-range-tabs">
+                  <button class="seg-btn" data-days="30">30日</button>
+                  <button class="seg-btn active" data-days="60">60日</button>
+                  <button class="seg-btn" data-days="120">半年</button>
+                  <button class="seg-btn" data-days="250">1年</button>
+                </div>
+              </div>
+            </div>
+            <div id="chart-trend" class="chart-box" style="height:330px;"></div>
+          </div>
+
+          <div class="card chart-card-sm">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title">当日 8 大宽基净申赎排行</h3>
+                <p class="card-desc">按指数归集净申赎（亿元），一眼辨别跨宽基换仓方向</p>
+              </div>
+            </div>
+            <div id="chart-groups" class="chart-box" style="height:330px;"></div>
+          </div>
+        </div>
+
+        <!-- 核心宽基 ETF 当日完整明细 -->
+        <div class="card table-card">
+          <div class="card-head">
+            <div>
+              <h3 class="card-title">核心宽基 ETF 当日完整明细</h3>
+              <p class="card-desc" id="etf-table-desc">覆盖沪深双所 31 只主力宽基与国新央企 ETF（*成交额由量价均价近似估算）</p>
+            </div>
+            <div class="filter-pills" id="etf-group-pills"></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>代码 / 名称</th>
+                  <th>方向</th>
+                  <th class="num">收盘价</th>
+                  <th class="num">涨跌幅</th>
+                  <th class="num">成交额(亿)</th>
+                  <th class="num" title="当日成交额 ÷ 近20日成交额中位数（抗暴量失真）">较常态量能</th>
+                  <th class="num">尾盘30分占比</th>
+                  <th class="num">总份额(亿份)</th>
+                  <th class="num">份额变动(亿份)</th>
+                  <th class="num">估算净申赎(亿)</th>
+                </tr>
+              </thead>
+              <tbody id="etf-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 视图 2：每日历史日志（用户复盘档案） -->
+      <section class="view" id="view-journal">
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">每日历史记录日志</h1>
+            <p class="page-subtitle">近 1 年每日动向档案与个人复盘笔记，点击任意一天可查看当日完整明细与写批注</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-ghost" id="btn-export-md">导出 Markdown</button>
+            <button class="btn btn-ghost" id="btn-export-csv">导出 CSV (Excel)</button>
+          </div>
+        </header>
+
+        <div class="card filter-bar-card">
+          <div class="filter-row">
+            <div class="filter-pills" id="journal-verdict-pills">
+              <button class="pill active" data-verdict="ALL">全部记录</button>
+              <button class="pill" data-verdict="ANOMALY">仅看异动</button>
+              <button class="pill" data-verdict="BUY">疑似买入</button>
+              <button class="pill" data-verdict="SELL">疑似卖出</button>
+              <button class="pill" data-verdict="ROTATION">跨宽基调仓</button>
+            </div>
+            <div class="filter-inputs">
+              <input type="date" id="journal-start-date" class="text-input input-sm" title="起始日期" />
+              <span class="sep-txt">至</span>
+              <input type="date" id="journal-end-date" class="text-input input-sm" title="结束日期" />
+              <input type="text" id="journal-keyword" class="text-input input-sm" placeholder="搜索摘要/备注/标签/日期..." />
+              <label class="checkbox-inline">
+                <input type="checkbox" id="journal-only-notes" />
+                <span>只看有笔记</span>
+              </label>
+            </div>
+          </div>
+          <div class="journal-summary-bar" id="journal-summary-bar">共 -- 条记录</div>
+        </div>
+
+        <div class="journal-list" id="journal-list"></div>
+      </section>
+
+      <!-- 视图 3：公告与底牌 -->
+      <section class="view" id="view-holdings">
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">官宣公告与定期报告底牌</h1>
+            <p class="page-subtitle">巨潮资讯网国家队增持公告实时追踪 + 基金定期报告前十大实名持有人汇总（自动校准估算模型权重）</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-ghost" id="btn-refresh-holdings">刷新底牌与公告</button>
+          </div>
+        </header>
+
+        <div class="window-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="stat-tile">
+            <div class="stat-title">最新定期报告锚点期</div>
+            <div class="stat-val" id="h-report-date">--</div>
+            <div class="stat-sub" id="h-report-meta">来源：东财基金前十大持有人数据</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-title">识别到国家队实名持仓总估值</div>
+            <div class="stat-val text-red" id="h-total-val">--</div>
+            <div class="stat-sub">按最新收盘价估算（亿元）</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-title">已校准权重的宽基 ETF 数量</div>
+            <div class="stat-val" id="h-covered-cnt">--</div>
+            <div class="stat-sub">实名持仓占比自动回填口径二估算模型</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="card chart-card-sm" style="flex: 1;">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title">按国家队主体持仓分布（亿元）</h3>
+                <p class="card-desc">中央汇金投资 / 汇金资管 / 定制资管 / 国新 / 证金 / 社保</p>
+              </div>
+            </div>
+            <div id="chart-entities" class="chart-box" style="height:300px;"></div>
+          </div>
+
+          <div class="card chart-card-lg" style="flex: 1.2;">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title">巨潮资讯 · 国家队相关官宣公告</h3>
+                <p class="card-desc">自动过滤债券/同名噪音，新公告命中后立刻高优提醒</p>
+              </div>
+            </div>
+            <div class="ann-list" id="ann-list"></div>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="card-head">
+            <div>
+              <h3 class="card-title">宽基 ETF 国家队实名持仓明细底牌</h3>
+              <p class="card-desc">展示每只 ETF 最新一期前十大持有人中匹配到的国家队实体与合计持股比例</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ETF 代码 / 名称</th>
+                  <th>报告期</th>
+                  <th class="num">国家队合计占比</th>
+                  <th class="num">估算持仓市值(亿)</th>
+                  <th>实名持有人明细</th>
+                </tr>
+              </thead>
+              <tbody id="holdings-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 视图 4：提醒与设置 -->
+      <section class="view" id="view-settings">
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">桌面行为、提醒规则与 Webhook 设置</h1>
+            <p class="page-subtitle">开机自动补录漏日数据、本地去重防打扰，所有配置保存在本地 SQLite</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-primary" id="btn-save-settings">保存全部设置</button>
+          </div>
+        </header>
+
+        <div class="settings-grid">
+          <!-- Win11 晚间定时自动巡检与同步 -->
+          <div class="card settings-card">
+            <h3 class="card-title">Win11 零后台常驻 · 盘后定时自动巡检</h3>
+            <p class="card-desc">不占托盘与内存：每天晚上等交易所公布官方 ETF 份额后自动静默跑一次核实；有真异动或数据源故障才弹大号卡片，无事直接退出（若当晚关机错过，下次开机自动补跑）。4月初年报 / 9月初半年报实名底牌亦会全自动检查更新。</p>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">每日盘后自动定时巡检（推荐开启）</div>
+                <div class="setting-hint" id="set-autostart-hint">写入 Win11 原生任务计划程序（免管理员权限），默认每晚 21:30 核实官方结论，错过自动开机补跑</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="set-autostart" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">每日自动巡检时间（建议 21:00 ~ 22:00）</div>
+                <div class="setting-hint">上交所/深交所通常在 19:30 ~ 21:00 公布当日 ETF 份额，默认 21:30 确保拿到正式核实结论</div>
+              </div>
+              <input type="time" id="set-schedule-time" class="text-input input-num" value="21:30" />
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">首次/全量历史回填交易日数</div>
+                <div class="setting-hint">默认 250 个交易日（约 1 年）</div>
+              </div>
+              <input type="number" id="set-backfill-days" class="text-input input-num" min="30" max="360" />
+            </div>
+
+            <div class="setting-actions-bar">
+              <button class="btn btn-ghost btn-sm" id="btn-force-resync">强制全量重刷（行情+份额+底牌）</button>
+            </div>
+          </div>
+
+          <!-- 告警触发规则 -->
+          <div class="card settings-card">
+            <h3 class="card-title">提醒触发与防打扰规则</h3>
+            <p class="card-desc">仅对交易所份额核实后的正式结论弹窗（不用盘面猜想打扰），同一交易日不重复轰炸。</p>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">数据源异常 / 连续缺数自动弹窗预警（推荐开启）</div>
+                <div class="setting-hint">若连续 ≥2 天份额未核实或连续同步报错，自动弹醒目提醒提示排查接口或升级 akshare</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="set-health-notify" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">每日核实后必发精简日报</div>
+                <div class="setting-hint">关闭 = 平时静默仅异动才通知；开启 = 每天份额核实后固定发一条小结</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="set-daily-summary" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">新官宣增持公告立刻高优推送</div>
+                <div class="setting-hint">巨潮资讯网监测到中央汇金/国新/诚通新公告时立即提醒</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="set-ann-notify" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <div class="setting-label">双锚自动动态校准标尺（推荐开启）</div>
+                <div class="setting-hint" id="set-scale-live-hint">按当日宽基总规模占比 + 近120日分位自动伸缩刻度，无需人工定期调参</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="set-auto-calibrate" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="threshold-row">
+              <label>
+                <span>手动净申赎告警线 (亿元)</span>
+                <input type="number" step="10" id="set-alert-flow" class="text-input" />
+              </label>
+              <label>
+                <span>异常信号强度阈值 (0-100)</span>
+                <input type="number" step="1" id="set-alert-score" class="text-input" />
+              </label>
+              <label>
+                <span>至少亮灯数 (1-5)</span>
+                <input type="number" min="1" max="5" id="set-alert-lamps" class="text-input" />
+              </label>
+            </div>
+          </div>
+
+          <!-- 全套通知通道 -->
+          <div class="card settings-card settings-card-full">
+            <h3 class="card-title">通知与 Webhook 推送通道（可按需开关并一键测试）</h3>
+            <div class="channels-grid">
+              <!-- Win11 原生大号置顶提醒卡片 -->
+              <div class="channel-box">
+                <div class="channel-head">
+                  <div>
+                    <div class="setting-label">Win11 大号置顶提醒卡片（需手动关闭）</div>
+                    <div class="setting-hint">大尺寸高对比浅色弹窗，绝不自动消失，直到您点击“我知道了”或“打开看板”</div>
+                  </div>
+                  <div class="channel-ops">
+                    <button class="btn btn-ghost btn-xs" data-test-channel="win_toast">预览弹窗</button>
+                    <label class="switch"><input type="checkbox" id="set-win-toast" /><span class="slider"></span></label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 飞书机器人 Webhook -->
+              <div class="channel-box">
+                <div class="channel-head">
+                  <div>
+                    <div class="setting-label">飞书机器人 Webhook</div>
+                    <div class="setting-hint">支持飞书群自定义机器人，可选填加签 Secret</div>
+                  </div>
+                  <div class="channel-ops">
+                    <button class="btn btn-ghost btn-xs" data-test-channel="feishu">一键测试</button>
+                    <label class="switch"><input type="checkbox" id="set-feishu-enabled" /><span class="slider"></span></label>
+                  </div>
+                </div>
+                <div class="channel-fields">
+                  <input type="text" id="set-feishu-webhook" class="text-input" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..." />
+                  <input type="password" id="set-feishu-secret" class="text-input" placeholder="加签密钥 Secret（若未开启签名校验可留空）" />
+                </div>
+              </div>
+
+              <!-- 企业微信机器人 Webhook -->
+              <div class="channel-box">
+                <div class="channel-head">
+                  <div>
+                    <div class="setting-label">企业微信机器人 Webhook</div>
+                    <div class="setting-hint">企业微信群机器人 Markdown 消息推送</div>
+                  </div>
+                  <div class="channel-ops">
+                    <button class="btn btn-ghost btn-xs" data-test-channel="wecom">一键测试</button>
+                    <label class="switch"><input type="checkbox" id="set-wecom-enabled" /><span class="slider"></span></label>
+                  </div>
+                </div>
+                <div class="channel-fields">
+                  <input type="text" id="set-wecom-webhook" class="text-input" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." />
+                </div>
+              </div>
+
+              <!-- 个人微信 -->
+              <div class="channel-box">
+                <div class="channel-head">
+                  <div>
+                    <div class="setting-label">个人微信推送（Server酱 / PushPlus）</div>
+                    <div class="setting-hint">无需建群，直接把异动摘要推到你的个人微信</div>
+                  </div>
+                  <div class="channel-ops">
+                    <button class="btn btn-ghost btn-xs" data-test-channel="personal_wechat">一键测试</button>
+                    <label class="switch"><input type="checkbox" id="set-pwx-enabled" /><span class="slider"></span></label>
+                  </div>
+                </div>
+                <div class="channel-fields channel-fields-row">
+                  <select id="set-pwx-provider" class="select-input">
+                    <option value="serverchan">Server酱 Turbo</option>
+                    <option value="pushplus">PushPlus</option>
+                  </select>
+                  <input type="password" id="set-pwx-key" class="text-input" placeholder="填写 SendKey / Token" />
+                </div>
+              </div>
+
+              <!-- 自定义通用 Webhook -->
+              <div class="channel-box">
+                <div class="channel-head">
+                  <div>
+                    <div class="setting-label">自定义通用 Webhook</div>
+                    <div class="setting-hint">以 POST JSON 发送标题、摘要与结构化金额字段</div>
+                  </div>
+                  <div class="channel-ops">
+                    <button class="btn btn-ghost btn-xs" data-test-channel="custom_webhook">一键测试</button>
+                    <label class="switch"><input type="checkbox" id="set-custom-enabled" /><span class="slider"></span></label>
+                  </div>
+                </div>
+                <div class="channel-fields">
+                  <input type="text" id="set-custom-url" class="text-input" placeholder="https://your-endpoint.example.com/hook" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 最近推送历史 -->
+          <div class="card settings-card settings-card-full">
+            <h3 class="card-title">最近提醒发送记录（含去重校验）</h3>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>发送时间</th>
+                    <th>交易日</th>
+                    <th>阶段</th>
+                    <th>提醒标题</th>
+                    <th>已达通道</th>
+                  </tr>
+                </thead>
+                <tbody id="notify-history-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 日志单日详情 & 个人复盘批注抽屉 -->
+  <div class="drawer-backdrop hidden" id="drawer-backdrop"></div>
+  <aside class="drawer hidden" id="log-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 class="drawer-title" id="drawer-date-title">----</h2>
+        <div class="drawer-sub" id="drawer-verdict-sub">--</div>
+      </div>
+      <button class="btn-icon" id="btn-close-drawer">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-metrics" id="drawer-metrics"></div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">各宽基国家队估算买卖</div>
+        <div class="drawer-blocks-grid" id="drawer-group-blocks"></div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">当日自动摘要</div>
+        <p class="drawer-summary" id="drawer-auto-summary"></p>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">个人复盘随手记</div>
+        <div class="quick-tags" id="drawer-quick-tags">
+          <button type="button" class="qtag" data-tag="跟买">跟买</button>
+          <button type="button" class="qtag" data-tag="减仓">减仓</button>
+          <button type="button" class="qtag" data-tag="观望">观望</button>
+          <button type="button" class="qtag" data-tag="护盘有效">护盘有效</button>
+          <button type="button" class="qtag" data-tag="假动作">假动作</button>
+          <button type="button" class="qtag" data-tag="关键底部">关键底部</button>
+          <button type="button" class="qtag" data-tag="跨宽基换仓">跨宽基换仓</button>
+        </div>
+        <input type="text" id="drawer-tags-input" class="text-input" placeholder="自定义标签（逗号分隔，例如：跟买,关键底部）" style="margin-bottom:8px;" />
+        <textarea id="drawer-note-input" class="textarea-input" rows="4" placeholder="记录你对这一天盘面和国家队动向的复盘心得、自己的仓位操作..."></textarea>
+        <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+          <button class="btn btn-primary btn-sm" id="btn-save-note">保存复盘笔记</button>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">五维信号灯拆解</div>
+        <div class="drawer-lamps" id="drawer-lamps"></div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title" id="drawer-etf-title">当日宽基 ETF 明细</div>
+        <div class="table-wrap">
+          <table class="data-table data-table-compact">
+            <thead>
+              <tr>
+                <th>代码 / 名称</th>
+                <th class="num">涨跌</th>
+                <th class="num">成交额(亿)</th>
+                <th class="num">量比</th>
+                <th class="num">净申赎(亿)</th>
+              </tr>
+            </thead>
+            <tbody id="drawer-etf-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 口径说明弹窗 -->
+  <div class="modal-backdrop hidden" id="method-modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>双口径买卖量估算与五维信号灯说明</h3>
+        <button class="btn-icon" id="btn-close-method">✕</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>口径一 · 31 只全宽基池与 12 只汇金核心池净申赎（亿元）</strong>：基于上交所与深交所官方每日 ETF 总份额，按 <code>(今日份额 - 昨日份额) × 收盘价/净值</code> 排除涨跌干扰并自动过滤拆分/折算异常。严格单列 <strong>12 只中央汇金宽基核心池</strong>（沪深300四巨头、上证50/180两只、中证500两只、中证1000四巨头；不混入创业板或国新央企主题）作为硬门控，避免散户申赎噪音干扰判定。</p>
+        <p><strong>口径二 · 疑似国家队买卖估算区间（亿元）</strong>：采用<strong>时点一致（Point-in-Time）</strong>历史定期报告实名持仓占比作为锚点，随报告年龄与累计份额周转率自然衰减并拓宽不确定区间（弱证据下限可降至 0），再叠加<strong>同方向巨无霸同步率、20日中位数常态量能比、以及 60 日价格区间位置</strong>双向修正得出各宽基与合计估算区间；当组内跨零分歧时完整展示正负两端。</p>
+        <p><strong>「较常态量能」与成交额说明</strong>：采用<strong>当日成交额 ÷ 近 20 个交易日成交额中位数</strong>（抗单日 10 倍暴量拉歪均线）；例如 <code>放量 +65%</code> 表示达到平时常态的 1.65 倍。注：免费日线源不含精确成交额时以 <code>成交量 × (开+高+低+收)/4</code> 近似估算。</p>
+        <p><strong>动态标尺、纯调仓与异常信号强度</strong>：双锚标尺基于「|净流|/AUM 比率」近 120 日分位并按 15→60 日平滑渐进，每日标尺随日志持久化。当出现明显跨宽基双向腾挪且净方向接近中性时定性为<strong>跨宽基调仓</strong>；若同时存在大额单向净买/净卖，则保留净买卖结论并同步展示调仓路径。右上角分值衡量<strong>盘面与份额异常信号强度</strong>，不代表国家队参与的精确概率。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 轻提示 Toast -->
+  <div class="toast hidden" id="app-toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

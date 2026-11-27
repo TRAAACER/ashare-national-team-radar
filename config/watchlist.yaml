@@ -1,0 +1,412 @@
+# 国家队动向监控 (GJDJK) 核心配置 v2
+# 覆盖 8 大宽基基准指数、沪深双所 31 只核心宽基与国新央企 ETF、国家队实名主体白名单
+
+benchmarks:
+  - code: "000300"
+    name: "沪深300"
+    market: "SH"
+    group: "HS300"
+  - code: "000016"
+    name: "上证50"
+    market: "SH"
+    group: "SZ50"
+  - code: "000905"
+    name: "中证500"
+    market: "SH"
+    group: "ZZ500"
+  - code: "000852"
+    name: "中证1000"
+    market: "SH"
+    group: "ZZ1000"
+  - code: "399006"
+    name: "创业板指"
+    market: "SZ"
+    group: "CYB"
+  - code: "000688"
+    name: "科创50"
+    market: "SH"
+    group: "KC50"
+  - code: "000510"
+    name: "中证A500"
+    market: "SH"
+    group: "A500"
+  - code: "000001"
+    name: "上证指数"
+    market: "SH"
+    group: "SOE"
+
+groups:
+  - id: "HS300"
+    name: "沪深300"
+    style: "large"
+    benchmark: "000300"
+    purity: "核心重仓"
+    color: "#DC2626"
+  - id: "SZ50"
+    name: "上证50/180"
+    style: "large"
+    benchmark: "000016"
+    purity: "核心重仓"
+    color: "#EA580C"
+  - id: "ZZ500"
+    name: "中证500"
+    style: "mid"
+    benchmark: "000905"
+    purity: "汇金主力"
+    color: "#D97706"
+  - id: "ZZ1000"
+    name: "中证1000"
+    style: "small"
+    benchmark: "000852"
+    purity: "核心重仓"
+    color: "#2563EB"
+  - id: "CYB"
+    name: "创业板"
+    style: "growth"
+    benchmark: "399006"
+    purity: "混合资金"
+    color: "#7C3AED"
+  - id: "KC50"
+    name: "科创50"
+    style: "growth"
+    benchmark: "000688"
+    purity: "混合资金"
+    color: "#0891B2"
+  - id: "A500"
+    name: "中证A500"
+    style: "broad"
+    benchmark: "000510"
+    purity: "新发宽基"
+    color: "#0D9488"
+  - id: "SOE"
+    name: "国新央企"
+    style: "soe"
+    benchmark: "000001"
+    purity: "央企主力"
+    color: "#4F46E5"
+
+etfs:
+  # 沪深300（中央汇金绝对控盘大本营）
+  - code: "510300"
+    name: "华泰柏瑞沪深300ETF"
+    exchange: "SH"
+    group: "HS300"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.80
+  - code: "510310"
+    name: "易方达沪深300ETF"
+    exchange: "SH"
+    group: "HS300"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.82
+  - code: "510330"
+    name: "华夏沪深300ETF"
+    exchange: "SH"
+    group: "HS300"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.84
+  - code: "159919"
+    name: "嘉实沪深300ETF"
+    exchange: "SZ"
+    group: "HS300"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.82
+  - code: "510360"
+    name: "广发沪深300ETF"
+    exchange: "SH"
+    group: "HS300"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.35
+
+  # 上证50 / 上证180（510180 汇金持仓高达 91.9%）
+  - code: "510050"
+    name: "华夏上证50ETF"
+    exchange: "SH"
+    group: "SZ50"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.82
+  - code: "510180"
+    name: "华安上证180ETF"
+    exchange: "SH"
+    group: "SZ50"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.88
+  - code: "510100"
+    name: "易方达上证50ETF"
+    exchange: "SH"
+    group: "SZ50"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.10
+  - code: "510850"
+    name: "工银上证50ETF"
+    exchange: "SH"
+    group: "SZ50"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.30
+
+  # 中证500
+  - code: "510500"
+    name: "南方中证500ETF"
+    exchange: "SH"
+    group: "ZZ500"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.75
+  - code: "512500"
+    name: "华夏中证500ETF"
+    exchange: "SH"
+    group: "ZZ500"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.65
+  - code: "159922"
+    name: "嘉实中证500ETF"
+    exchange: "SZ"
+    group: "ZZ500"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.45
+  - code: "510510"
+    name: "广发中证500ETF"
+    exchange: "SH"
+    group: "ZZ500"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.35
+
+  # 中证1000（四巨头汇金持股均在 85%~92%）
+  - code: "512100"
+    name: "南方中证1000ETF"
+    exchange: "SH"
+    group: "ZZ1000"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.82
+  - code: "159845"
+    name: "华夏中证1000ETF"
+    exchange: "SZ"
+    group: "ZZ1000"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.82
+  - code: "560010"
+    name: "广发中证1000ETF"
+    exchange: "SH"
+    group: "ZZ1000"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.85
+  - code: "159629"
+    name: "富国中证1000ETF"
+    exchange: "SZ"
+    group: "ZZ1000"
+    core_giant: true
+    huijin_core: true
+    base_nt_weight: 0.80
+  - code: "159633"
+    name: "易方达中证1000ETF"
+    exchange: "SZ"
+    group: "ZZ1000"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.40
+
+  # 创业板（159915 汇金约占 54%，其余两只散户/机构混合度较高）
+  - code: "159915"
+    name: "易方达创业板ETF"
+    exchange: "SZ"
+    group: "CYB"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.48
+  - code: "159977"
+    name: "天弘创业板ETF"
+    exchange: "SZ"
+    group: "CYB"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.12
+  - code: "159952"
+    name: "广发创业板ETF"
+    exchange: "SZ"
+    group: "CYB"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.22
+
+  # 科创50（散户/量化换手重，仅易方达 588080 汇金占比约 42%）
+  - code: "588000"
+    name: "华夏科创50ETF"
+    exchange: "SH"
+    group: "KC50"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.25
+  - code: "588080"
+    name: "易方达科创50ETF"
+    exchange: "SH"
+    group: "KC50"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.42
+  - code: "588050"
+    name: "工银科创50ETF"
+    exchange: "SH"
+    group: "KC50"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.14
+
+  # 中证A500
+  - code: "563360"
+    name: "华泰柏瑞中证A500ETF"
+    exchange: "SH"
+    group: "A500"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.32
+  - code: "159352"
+    name: "南方中证A500ETF"
+    exchange: "SZ"
+    group: "A500"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.30
+  - code: "159361"
+    name: "易方达中证A500ETF"
+    exchange: "SZ"
+    group: "A500"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.30
+  - code: "159338"
+    name: "国泰中证A500ETF"
+    exchange: "SZ"
+    group: "A500"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.28
+  - code: "512050"
+    name: "华夏中证A500ETF"
+    exchange: "SH"
+    group: "A500"
+    core_giant: true
+    huijin_core: false
+    base_nt_weight: 0.30
+
+  # 国新央企主题
+  - code: "560070"
+    name: "汇添富央企股东回报ETF"
+    exchange: "SH"
+    group: "SOE"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.65
+  - code: "560170"
+    name: "南方央企科技引领ETF"
+    exchange: "SH"
+    group: "SOE"
+    core_giant: false
+    huijin_core: false
+    base_nt_weight: 0.60
+
+national_team_entities:
+  - pattern: "中央汇金投资"
+    label: "中央汇金投资"
+    category: "核心主力"
+    weight_boost: 1.0
+  - pattern: "汇金资管单一资产管理计划"
+    label: "汇金定制单一资管计划"
+    category: "汇金通道"
+    weight_boost: 0.95
+  - pattern: "中央汇金资产"
+    label: "中央汇金资产管理"
+    category: "核心主力"
+    weight_boost: 1.0
+  - pattern: "丰利"
+    label: "汇金定制资管计划(丰利)"
+    category: "汇金通道"
+    weight_boost: 0.95
+  - pattern: "瑞利"
+    label: "汇金定制资管计划(瑞利)"
+    category: "汇金通道"
+    weight_boost: 0.95
+  - pattern: "国新投资"
+    label: "国新投资"
+    category: "央企主力"
+    weight_boost: 0.90
+  - pattern: "诚通金控"
+    label: "诚通金控"
+    category: "央企主力"
+    weight_boost: 0.90
+  - pattern: "中国证券金融"
+    label: "证金公司"
+    category: "传统国家队"
+    weight_boost: 0.85
+  - pattern: "中证金融资产管理"
+    label: "中证金融资管计划"
+    category: "传统国家队"
+    weight_boost: 0.85
+  - pattern: "梧桐树投资"
+    label: "梧桐树投资"
+    category: "外管局系"
+    weight_boost: 0.80
+  - pattern: "北京凤山"
+    label: "北京凤山投资"
+    category: "外管局系"
+    weight_boost: 0.80
+  - pattern: "北京坤藤"
+    label: "北京坤藤投资"
+    category: "外管局系"
+    weight_boost: 0.80
+  - pattern: "全国社保基金"
+    label: "全国社保基金"
+    category: "广义长线"
+    weight_boost: 0.60
+  - pattern: "基本养老保险"
+    label: "基本养老保险基金"
+    category: "广义长线"
+    weight_boost: 0.55
+
+announcement_keywords:
+  - "中央汇金"
+  - "国新投资"
+  - "中国诚通"
+  - "诚通金控"
+  - "增持交易型开放式指数基金"
+  - "增持ETF"
+
+thresholds:
+  # 按 2026 年宽基 ETF 实盘分位数校准（249日中位数约 85.5亿，75%分位 162亿，85%分位 235亿）
+  # 全池净申赎金额阈值（亿元）
+  strong_flow_yi: 180.0
+  medium_flow_yi: 80.0
+  # 汇金核心控盘池（占比>=50%核心ETF）净申赎门控阈值（亿元）
+  core_strong_yi: 120.0
+  core_medium_yi: 50.0
+  # 跨宽基换仓识别阈值：双向单边流均 >= 45亿 且 净额明显小于总单边流
+  rotation_side_yi: 45.0
+  rotation_offset_ratio: 0.45
+  # 成交额相对20日中位数放大倍数（抗单日暴量失真）
+  volume_strong_ratio: 1.80
+  volume_medium_ratio: 1.35
+  # 60日价格分位阈值（吸收 Resonance 价格位置门控）
+  price_pos_low: 40.0
+  price_pos_high: 75.0
+  price_pos_extreme_high: 85.0
+  # 尾盘30分钟成交占比与相对均量倍数
+  tail_share_high: 0.22
+  tail_ratio_high: 1.80
+  # 开机大号弹窗与 Webhook 告警触发阈值（不乱响、一响即大事）
+  alert_flow_yi: 150.0
+  alert_score_min: 72
+  alert_active_lamps_min: 3
